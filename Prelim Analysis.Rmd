@@ -1,0 +1,58 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+```{r}
+library(ggplot2)
+library(reshape2)
+library(ggcorrplot)
+library(lme4)
+library(dplyr)
+
+```
+
+
+Corr Matrix
+```{r}
+data <- read.table("alcohol.txt", header = TRUE)
+
+cor_matrix <- cor(data[, c("age", "alcuse", "coa", "male","peer")])
+
+ggcorrplot(cor_matrix, method = "square", lab = TRUE, colors = c("red", "white", "blue"))
+
+```
+
+
+Descriptive Statistics
+```{r}
+summary(data)
+table(data$coa)
+table(data$male)
+```
+
+
+
+Alcohol Use by COA (alcoholic parents yes or no)
+```{r}
+ggplot(data, aes(x = age, y = alcuse, color = factor(coa))) +
+  geom_point() + geom_smooth(method = "loess") +
+  labs(title = "Alcohol Use Over Time by COA Status")
+
+```
+
+
+Models
+```{r}
+data %>%
+  group_by(age, coa) %>%
+  summarise(mean_alcuse = mean(alcuse, na.rm = TRUE)) %>%
+  ggplot(aes(x = age, y = mean_alcuse, color = factor(coa))) +
+  geom_line() + geom_point() +
+  labs(title = "Average Alcohol Use Over Time by COA Status")
+
+model <- lmer(alcuse ~ age + coa + peer + (1 | id), data = data)
+summary(model)
+```
